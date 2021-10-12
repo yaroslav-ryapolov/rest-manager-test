@@ -2,6 +2,10 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestManagerWeb", "RestManagerWeb\RestManagerWeb.csproj", "{57402FF2-795A-4883-8138-705748E1D52E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestManagerLogic", "RestManagerLogic\RestManagerLogic.csproj", "{99B96A4D-8906-4F9A-A025-1C6D97A43C9D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RestManagerLogicTests", "RestManagerLogicTests\RestManagerLogicTests.csproj", "{02F99CF6-750C-40DB-A706-360274CD66AB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +16,13 @@ Global
 		{57402FF2-795A-4883-8138-705748E1D52E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{57402FF2-795A-4883-8138-705748E1D52E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{57402FF2-795A-4883-8138-705748E1D52E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99B96A4D-8906-4F9A-A025-1C6D97A43C9D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99B96A4D-8906-4F9A-A025-1C6D97A43C9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99B96A4D-8906-4F9A-A025-1C6D97A43C9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99B96A4D-8906-4F9A-A025-1C6D97A43C9D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02F99CF6-750C-40DB-A706-360274CD66AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02F99CF6-750C-40DB-A706-360274CD66AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02F99CF6-750C-40DB-A706-360274CD66AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02F99CF6-750C-40DB-A706-360274CD66AB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
