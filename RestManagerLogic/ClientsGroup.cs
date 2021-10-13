@@ -4,7 +4,13 @@ namespace RestManagerLogic
 {
     public class ClientsGroup
     {
-        public Guid Guid;
-        public int Size;
+        public readonly Guid Guid;
+        public readonly int Size;
+
+        public ClientsGroup(int size)
+        {
+            this.Guid = Guid.NewGuid();
+            this.Size = size;
+        }
     }
 }
