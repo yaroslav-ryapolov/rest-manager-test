@@ -11,8 +11,8 @@ namespace RestManagerLogic
 
         private readonly List<LinkedList<Table>> _tablesByAvailableChairs;
 
-        public List<Table> Tables => _tables;
-        public List<ClientsGroup> ClientsQueue => _clientsQueue;
+        public IReadOnlyCollection<Table> Tables => _tables.AsReadOnly();
+        public IReadOnlyCollection<ClientsGroup> ClientsQueue => _clientsQueue;
 
         public RestManager(List<Table> tables)
         {
@@ -35,6 +35,8 @@ namespace RestManagerLogic
 
         public void OnArrive(ClientsGroup group)
         {
+            // TO LOCK Queue
+            
             // todo: чуток ускорить нужно, чтобы не двигать всех а снова использовать что-то вроде LinkedList
             _clientsQueue.Insert(0, group);
             
@@ -43,29 +45,33 @@ namespace RestManagerLogic
 
         public void OnLeave(ClientsGroup group)
         {
+            // TO LOCK Queue
             if (_clientsQueue.Remove(group))
             {
                 return;
             }
 
-            var tableWithGroup = this.Lookup(group);
-            if (tableWithGroup == null)
+            // TO LOCK Tables Matrix
+            var table = this.Lookup(group);
+            if (table == null)
             {
-                return;
+                throw new ArgumentOutOfRangeException(nameof(group), "Group is not found at any table");
             }
+
+            // todo: receive LinkedList and use it to remove faster
+            _tablesByAvailableChairs[table.AvailableChairs].Remove(table);
+            _tablesByAvailableChairs[table.AvailableChairs + group.Size].AddLast(table);
             
-            tableWithGroup.ReleaseChairs(group);
-            // if (tableWithGroup.IsOccupied)
-            // {
-            //     определить в каком из словарей оставить стол
-            // }
-            
+            table.ReleaseChairs(group);
+
             this.TryToSeatSomebodyFromQueue();
         }
         
         public Table Lookup(ClientsGroup group)
         {
-            // нужно причесать чуток и оптимизировать (хешиком)
+            // TO LOCK Tables Matrix
+            
+            // нужно причесать чуток и оптимизировать (хешиком, где хранится линкед лист на стол, который также обновляется в случае необходимости)
             return _tables
                 .SelectMany((t) => t.SeatedClientGroups
                     .Select((g) => new
@@ -100,6 +106,8 @@ namespace RestManagerLogic
 
         public bool SeatClientsGroup(ClientsGroup group)
         {
+            // TO LOCK Tables Matrix
+            
             var tablesWithEnoughRoom = _tablesByAvailableChairs[group.Size];
             int i = group.Size + 1;
             while (!tablesWithEnoughRoom.Any() && i < _tablesByAvailableChairs.Count)

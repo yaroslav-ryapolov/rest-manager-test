@@ -24,6 +24,8 @@ namespace RestManagerLogic
         // public bool TryToSeatClientsGroup(ClientsGroup group)
         public void SeatClientsGroup(ClientsGroup group)
         {
+            // TO LOCK Table
+            
             // попробовать посадить группу за стол
             if (group.Size > this.AvailableChairs)
             {
@@ -37,6 +39,8 @@ namespace RestManagerLogic
 
         public void ReleaseChairs(ClientsGroup group)
         {
+            // TO LOCK Table
+            
             // освободить стулья
             if (!_seatedClientsGroups.Remove(group))
             {

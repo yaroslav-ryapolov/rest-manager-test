@@ -69,5 +69,35 @@ namespace RestManagerLogicTests
             
             Assert.Pass();
         }
+        
+        [Test]
+        public void ReleaseTable()
+        {
+            var group = new ClientsGroup(3);
+
+            // first time to check release happened in general
+            _restManager.OnArrive(group);
+            _restManager.OnLeave(group);
+
+            if (_restManager.Tables.Count(t => t.IsOccupied) != 0)
+            {
+                Assert.Fail("Wrong number of table is occupied");
+            }
+            
+            // second time to check release is really made table available
+            _restManager.OnArrive(group);
+
+            if (_restManager.Tables.Count(t => t.IsOccupied) > 1)
+            {
+                Assert.Fail("More than one table is occupied");
+            }
+            
+            if (_restManager.Tables.Count((t) => t.SeatedClientGroups.Contains(group) && t.Size == 3) != 1)
+            {
+                Assert.Fail("Wrong table is occupied (group should be seated to 3 persons table)");
+            }
+            
+            Assert.Pass();
+        }
     }
 }
