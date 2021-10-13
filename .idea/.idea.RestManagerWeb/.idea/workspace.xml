@@ -8,14 +8,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="6840714f-4099-46fb-8602-538554988bd9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/RestManagerLogic/ClientsGroup.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/RestManagerLogic/RestManager.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/RestManagerLogic/RestManagerLogic.csproj" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/RestManagerLogic/Table.cs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/RestManagerLogicTests/RestManagerLogicTests.csproj" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/RestManagerLogicTests/UnitTest1.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/RestManagerWeb.sln" beforeDir="false" afterPath="$PROJECT_DIR$/RestManagerWeb.sln" afterDir="false" />
+    <list default="true" id="6840714f-4099-46fb-8602-538554988bd9" name="Changes" comment="started work on logic implementation">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.RestManagerWeb/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.RestManagerWeb/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RestManagerLogic/ClientsGroup.cs" beforeDir="false" afterPath="$PROJECT_DIR$/RestManagerLogic/ClientsGroup.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RestManagerLogic/RestManager.cs" beforeDir="false" afterPath="$PROJECT_DIR$/RestManagerLogic/RestManager.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RestManagerLogic/Table.cs" beforeDir="false" afterPath="$PROJECT_DIR$/RestManagerLogic/Table.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,6 +29,10 @@
         <option name="url" value="git@github.com:yaroslav-ryapolov/rest-manager-test.git" />
       </UrlAndAccount>
     </option>
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="mock://C:/Users/littl/RiderProjects/RestManagerWeb/RestManagerLogic/ClientsGroup.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock://C:/Users/littl/RiderProjects/RestManagerWeb/RestManagerLogic/RestManager.cs" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="ProjectId" id="1zOwegxvc8rIFNTQebVHzwoSTdY" />
   <component name="ProjectViewState">
@@ -88,8 +89,31 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1634032546477</updated>
-      <workItem from="1634032550885" duration="3697000" />
+      <workItem from="1634032550885" duration="3808000" />
+      <workItem from="1634098327039" duration="3689000" />
     </task>
+    <task id="LOCAL-00001" summary="started working on logic implementation">
+      <created>1634055460156</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1634055460157</updated>
+    </task>
+    <task id="LOCAL-00002" summary="started working on logic implementation">
+      <created>1634055474070</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1634055474070</updated>
+    </task>
+    <task id="LOCAL-00003" summary="started work on logic implementation">
+      <created>1634055492411</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1634055492411</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -105,5 +129,11 @@
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="started working on logic implementation" />
+    <MESSAGE value="started work on logic implementation" />
+    <option name="LAST_COMMIT_MESSAGE" value="started work on logic implementation" />
   </component>
 </project>
