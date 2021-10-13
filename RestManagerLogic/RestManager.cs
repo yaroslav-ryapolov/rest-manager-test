@@ -6,39 +6,39 @@ namespace RestManagerLogic
 {
     public class RestManager
     {
-        private readonly List<Table> _tables;
-        private readonly List<ClientsGroup> _clientsQueue = new List<ClientsGroup>();
+        private readonly int _maxTableSize;
+        private readonly List<TableWithNode> _tables;
+        private readonly LinkedList<ClientsGroup> _clientsQueue = new LinkedList<ClientsGroup>();
+        
+        private readonly List<LinkedList<TableWithNode>> _tablesByAvailableChairs;
 
-        private readonly List<LinkedList<Table>> _tablesByAvailableChairs;
-
-        public IReadOnlyCollection<Table> Tables => _tables.AsReadOnly();
-        public IReadOnlyCollection<ClientsGroup> ClientsQueue => _clientsQueue;
+        public IEnumerable<Table> Tables => _tables.Select((t) => t.Table);
 
         public RestManager(List<Table> tables)
         {
             // doing the copy to avoid effects from external list changes
-            _tables = tables.ToList();
+            _tables = new List<TableWithNode>(tables.Count);
 
-            // todo: вынести в отдельный внутренний класс, где всё чуть более явно обозвать
-            var maxTableSize = _tables.Max((t) => t.Size);
-            _tablesByAvailableChairs = new List<LinkedList<Table>>(maxTableSize + 1);
+            _maxTableSize = tables.Max((t) => t.Size);
+            _tablesByAvailableChairs = new List<LinkedList<TableWithNode>>(_maxTableSize + 1);
             for (int i = 0; i < _tablesByAvailableChairs.Capacity; i++)
             {
-                _tablesByAvailableChairs.Add(new LinkedList<Table>());
+                _tablesByAvailableChairs.Add(new LinkedList<TableWithNode>());
             }
 
-            foreach (var table in _tables)
+            foreach (var table in tables)
             {
-                _tablesByAvailableChairs[table.AvailableChairs].AddLast(table);
+                var tableWithNode = new TableWithNode(table);
+                tableWithNode.Node = _tablesByAvailableChairs[table.AvailableChairs].AddLast(tableWithNode);
+                
+                _tables.Add(tableWithNode);
             }
         }
 
         public void OnArrive(ClientsGroup group)
         {
             // TO LOCK Queue
-            
-            // todo: чуток ускорить нужно, чтобы не двигать всех а снова использовать что-то вроде LinkedList
-            _clientsQueue.Insert(0, group);
+            _clientsQueue.AddLast(group);
             
             this.TryToSeatSomebodyFromQueue();
         }
@@ -58,10 +58,22 @@ namespace RestManagerLogic
                 throw new ArgumentOutOfRangeException(nameof(group), "Group is not found at any table");
             }
 
-            // todo: receive LinkedList and use it to remove faster
-            _tablesByAvailableChairs[table.AvailableChairs].Remove(table);
-            _tablesByAvailableChairs[table.AvailableChairs + group.Size].AddLast(table);
+            var tableWithNode = _tables.Single((t) => t.Table == table);
             
+            // todo: receive LinkedList and use it to remove faster
+            _tablesByAvailableChairs[table.AvailableChairs].Remove(tableWithNode);
+            var newTableHead = _tablesByAvailableChairs[table.AvailableChairs + group.Size];
+            if (table.Size == table.AvailableChairs + group.Size)
+            {
+                // put free tables as first possible options at the beginning
+                newTableHead.AddFirst(tableWithNode);
+            }
+            else
+            {
+                // put occupied tables at the end in case there is no free tables
+                newTableHead.AddLast(tableWithNode);
+            }
+
             table.ReleaseChairs(group);
 
             this.TryToSeatSomebodyFromQueue();
@@ -73,10 +85,10 @@ namespace RestManagerLogic
             
             // нужно причесать чуток и оптимизировать (хешиком, где хранится линкед лист на стол, который также обновляется в случае необходимости)
             return _tables
-                .SelectMany((t) => t.SeatedClientGroups
+                .SelectMany((t) => t.Table.SeatedClientGroups
                     .Select((g) => new
                     {
-                        table = t,
+                        table = t.Table,
                         group = g
                     })
                 )
@@ -87,32 +99,48 @@ namespace RestManagerLogic
 
         public void TryToSeatSomebodyFromQueue()
         {
-            // как-то "упростить" формат посадки (не искать сквозь всю очередь всегда, а разбить на кол-во вариаций
-            // мест и их уже сравнивать)
-            // использовать Set для определения того какие остались максимальные свободные "слоты"
-
-            for (int i = _clientsQueue.Count - 1; i >= 0; i--)
+            // TO LOCK Queue
+            int minimumNotSeatedSize = _maxTableSize + 1;
+            
+            var queueItem = _clientsQueue.First;
+            while (queueItem != null && minimumNotSeatedSize > 1)
             {
-                var group = _clientsQueue[i];
-                if (this.SeatClientsGroup(group))
+                var current = queueItem;
+                queueItem = queueItem.Next;
+
+                
+                if (current.Value.Size >= minimumNotSeatedSize)
                 {
-                    _clientsQueue.Remove(group);
+                    continue;
                 }
 
-                // остановить "поиск места" для групп в очереди, которые больше либо равны той, для которой не нашли
-                // стол на прошлом проходе цикла
+                if (this.TrySeatClientsGroup(current.Value))
+                {
+                    _clientsQueue.Remove(current);
+                }
+                else
+                {
+                    minimumNotSeatedSize = current.Value.Size;
+                }
             }
         }
 
-        public bool SeatClientsGroup(ClientsGroup group)
+        public bool TrySeatClientsGroup(ClientsGroup group)
         {
             // TO LOCK Tables Matrix
             
             var tablesWithEnoughRoom = _tablesByAvailableChairs[group.Size];
             int i = group.Size + 1;
-            while (!tablesWithEnoughRoom.Any() && i < _tablesByAvailableChairs.Count)
+            while ((!tablesWithEnoughRoom.Any() || tablesWithEnoughRoom.First?.Value.Table.IsOccupied == true)
+                   && i < _tablesByAvailableChairs.Count)
             {
-                tablesWithEnoughRoom = _tablesByAvailableChairs[i];
+                if (tablesWithEnoughRoom.First?.Value.Table.IsOccupied != true
+                    || _tablesByAvailableChairs[i].First?.Value.Table.IsOccupied == false)
+                {
+                    tablesWithEnoughRoom = _tablesByAvailableChairs[i];
+                }
+
+                i++;
             }
 
             var table = tablesWithEnoughRoom.First?.Value;
@@ -123,10 +151,21 @@ namespace RestManagerLogic
 
             // move table to new list
             tablesWithEnoughRoom.RemoveFirst();
-            _tablesByAvailableChairs[table.AvailableChairs - group.Size].AddLast(table);
+            _tablesByAvailableChairs[table.Table.AvailableChairs - group.Size].AddLast(table);
 
-            table.SeatClientsGroup(group);
+            table.Table.SeatClientsGroup(group);
             return true;
+        }
+        
+        private class TableWithNode
+        {
+            public readonly Table Table;
+            public LinkedListNode<TableWithNode> Node;
+
+            public TableWithNode(Table table)
+            {
+                this.Table = table;
+            }
         }
     }
 }

@@ -99,5 +99,31 @@ namespace RestManagerLogicTests
             
             Assert.Pass();
         }
+
+        [Test]
+        public void SeatFreeTablesAtFirst()
+        {
+            var group1_3 = new ClientsGroup(3);
+            var group2_3 = new ClientsGroup(3);
+            var group3_3_control = new ClientsGroup(3);
+            var group4_3 = new ClientsGroup(3);
+
+            // first time to check release happened in general
+            _restManager.OnArrive(group1_3); // 3rd taken
+            _restManager.OnArrive(group2_3); // 4th taken
+            _restManager.OnArrive(group3_3_control); // 5th taken
+            _restManager.OnArrive(group4_3); // 6th taken
+            
+            _restManager.OnLeave(group3_3_control); // 5th is released
+            _restManager.OnArrive(group3_3_control); // should take 5th table
+
+            if (_restManager.Tables.Count((t) => t.SeatedClientGroups.Contains(group3_3_control) && t.Size == 5) != 1)
+            {
+                Assert.Fail("Wrong table is occupied (group should be seated at free 5 persons table)");
+            }
+            
+
+            Assert.Pass();
+        }
     }
 }
