@@ -35,7 +35,7 @@ namespace RestManagerLogicTests
                 Assert.Fail("More than one table is occupied");
             }
             
-            if (_restManager.Tables.Count((t) => t.SeatedClientGroups.Contains(group) && t.Table.Size == 3) != 1)
+            if (_restManager.Tables.Count((t) => t.SeatedClientGroups.Contains(group) && t.Size == 3) != 1)
             {
                 Assert.Fail("Wrong table is occupied (group should be seated to 3 persons table)");
             }
@@ -57,12 +57,12 @@ namespace RestManagerLogicTests
                 Assert.Fail("Wrong number of table is occupied");
             }
             
-            if (_restManager.Tables.Count((t) => t.SeatedClientGroups.Contains(group1) && t.Table.Size == 3) != 1)
+            if (_restManager.Tables.Count((t) => t.SeatedClientGroups.Contains(group1) && t.Size == 3) != 1)
             {
                 Assert.Fail("Wrong table is occupied for group 1 (group should be seated to 3 persons table)");
             }
             
-            if (_restManager.Tables.Count((t) => t.SeatedClientGroups.Contains(group2) && t.Table.Size != 3) != 1)
+            if (_restManager.Tables.Count((t) => t.SeatedClientGroups.Contains(group2) && t.Size != 3) != 1)
             {
                 Assert.Fail("Wrong table is occupied for group 2 (group should be seated to 4 persons table)");
             }
