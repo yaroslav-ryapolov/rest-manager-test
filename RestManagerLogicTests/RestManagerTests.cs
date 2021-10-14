@@ -5,6 +5,7 @@ using RestManagerLogic;
 
 namespace RestManagerLogicTests
 {
+    [TestFixture]
     public class RestManagerTests
     {
         private RestManager _restManager;
@@ -81,15 +82,15 @@ namespace RestManagerLogicTests
 
             if (_restManager.Tables.Count(t => t.IsOccupied) != 0)
             {
-                Assert.Fail("Wrong number of table is occupied");
+                Assert.Fail("Wrong number of tables is occupied");
             }
             
             // second time to check release is really made table available
             _restManager.OnArrive(group);
 
-            if (_restManager.Tables.Count(t => t.IsOccupied) > 1)
+            if (_restManager.Tables.Count(t => t.IsOccupied) != 1)
             {
-                Assert.Fail("More than one table is occupied");
+                Assert.Fail("Wrong number of tables is occupied");
             }
             
             if (_restManager.Tables.Count((t) => t.SeatedClientGroups.Contains(group) && t.Size == 3) != 1)
@@ -122,6 +123,39 @@ namespace RestManagerLogicTests
                 Assert.Fail("Wrong table is occupied (group should be seated at free 5 persons table)");
             }
             
+
+            Assert.Pass();
+        }
+        
+        [Test]
+        public void NoPlacesWithExactButBiggerTablesAvailable()
+        {
+            _restManager = new RestManager(new List<Table>
+            {
+                new Table(6),
+                new Table(6),
+            });
+            
+            var group1 = new ClientsGroup(2);
+            var group2 = new ClientsGroup(2);
+            var group3 = new ClientsGroup(2);
+            
+            _restManager.OnArrive(group1);
+            _restManager.OnArrive(group2);
+            _restManager.OnArrive(group3);
+
+            if (_restManager.Tables.Count((t) => t.SeatedClientGroups.Contains(group1)) != 1
+                || _restManager.Tables.Count((t) => t.SeatedClientGroups.Contains(group2)) != 1
+                || _restManager.Tables.Count((t) => t.SeatedClientGroups.Contains(group3)) != 1)
+            {
+                Assert.Fail("not all groups are seated");
+            }
+
+            if (_restManager.Tables.Count((t) => t.AvailableChairs == 2) != 1
+                || _restManager.Tables.Count((t) => t.AvailableChairs == 4) != 1)
+            {
+                Assert.Fail("available seats number is not correct");
+            }
 
             Assert.Pass();
         }

@@ -9,8 +9,8 @@ namespace RestManagerLogic
 
         public ClientsGroup(int size)
         {
-            this.Guid = Guid.NewGuid();
-            this.Size = size;
+            Guid = Guid.NewGuid();
+            Size = size;
         }
     }
 }

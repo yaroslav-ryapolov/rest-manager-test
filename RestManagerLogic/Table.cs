@@ -8,44 +8,44 @@ namespace RestManagerLogic
     {
         public readonly Guid Guid;
         public readonly int Size;
-        private readonly List<ClientsGroup> _seatedClientsGroups = new List<ClientsGroup>();
-        public IReadOnlyCollection<ClientsGroup> SeatedClientGroups => _seatedClientsGroups.AsReadOnly();
-        
-        // есть смысл "кешировать" доступное количество стульев, чтобы не суммировать группу каждый раз (при посадке и наоборот)
-        public int AvailableChairs => this.Size - _seatedClientsGroups.Sum((g) => g.Size);
+
+        private readonly List<ClientsGroup> _seatedClientsGroups = new();
+        public IEnumerable<ClientsGroup> SeatedClientGroups => _seatedClientsGroups;
+
+        public int AvailableChairs { get; private set; }
         public bool IsOccupied => _seatedClientsGroups.Any();
 
         public Table(int size)
         {
-            this.Guid = Guid.NewGuid();
-            this.Size = size;
+            Guid = Guid.NewGuid();
+            Size = size;
+
+            UpdateAvailableChairs();
         }
 
-        // public bool TryToSeatClientsGroup(ClientsGroup group)
         public void SeatClientsGroup(ClientsGroup group)
         {
-            // TO LOCK Table
-            
-            // попробовать посадить группу за стол
             if (group.Size > this.AvailableChairs)
             {
-                throw new ArgumentOutOfRangeException(nameof(@group), group.Size, "Group does not fit in table");
+                throw new ArgumentOutOfRangeException(nameof(group), group.Size, "Group does not fit in table");
             }
 
             _seatedClientsGroups.Add(group);
-                
-            // return false;
+            UpdateAvailableChairs();
         }
 
         public void ReleaseChairs(ClientsGroup group)
         {
-            // TO LOCK Table
-            
-            // освободить стулья
             if (!_seatedClientsGroups.Remove(group))
             {
-                throw new ArgumentOutOfRangeException(nameof(@group), "Group was not at this table");
+                throw new ArgumentOutOfRangeException(nameof(group), "Group was not at this table");
             }
+            UpdateAvailableChairs();
+        }
+
+        private void UpdateAvailableChairs()
+        {
+            AvailableChairs = Size - _seatedClientsGroups.Sum((g) => g.Size);
         }
     }
 }
