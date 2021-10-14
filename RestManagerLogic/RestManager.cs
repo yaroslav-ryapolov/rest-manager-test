@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace RestManagerLogic
 {
     public class RestManager
     {
-        // блокировка на всё и сразу
         private readonly TablesManager _tablesManager;
-        // блокировка на чтение и запись
         private readonly ClientsManager _clientsManager = new();
 
         public IEnumerable<Table> Tables => _tablesManager.GetTables();
@@ -20,50 +19,81 @@ namespace RestManagerLogic
 
         public void OnArrive(ClientsGroup group)
         {
-            // TO LOCK Queue read and write
-            _clientsManager.AddGroup(group);
-            _clientsManager.EnqueueGroup(group);
+            bool logWasTaken = false;
+            try
+            {
+                logWasTaken = EnterChangeSection();
+                ProcessNewGroup(group);
+            }
+            finally
+            {
+                ExitChangeSection(logWasTaken);
+            }
+        }
 
-            // потенциально можно разнести, но нужно с локами будет разибраться
-            TrySeatSomebodyFromQueue();
+        private void ProcessNewGroup(ClientsGroup group)
+        {
+            _clientsManager.AddGroup(group);
+
+            if (!TrySeatClientsGroup(group))
+            {
+                _clientsManager.EnqueueGroup(group);
+            }
         }
 
         public void OnLeave(ClientsGroup group)
         {
-            // TO LOCK Queue read and write
+            bool logWasTaken = false;
+            try
+            {
+                logWasTaken = EnterChangeSection();
+                ProcessGroupLeaving(group);
+            }
+            finally
+            {
+                ExitChangeSection(logWasTaken);
+            }
+        }
+
+        private void ProcessGroupLeaving(ClientsGroup group)
+        {
             if (_clientsManager.DequeueGroup(group))
             {
                 _clientsManager.RemoveGroup(group);
                 return;
             }
-            
-            var table = Lookup(group);
+                
+            var table = DoTableLookup(group);
             _clientsManager.RemoveGroup(group);
-            // end lock
-            
             if (table == null)
             {
                 throw new ArgumentOutOfRangeException(nameof(group), "Group is not found neither in queue or at any table");
             }
 
-            // TO LOCK Tables Matrix read and write
-            _tablesManager.ChangeTableIndex(table, table.AvailableChairs + group.Size);
-            table.ReleaseChairs(group);
-            // end lock
-
+            _tablesManager.ReleaseTableFromGroup(table, group);
             TrySeatSomebodyFromQueue();
         }
         
         public Table Lookup(ClientsGroup group)
         {
-            // TO LOCK Queue (on read)
+            try
+            {
+                EnterReadSection();
+                return DoTableLookup(group);
+            }
+            finally
+            {
+                ExitReadSection();
+            }
+        }
 
+        private Table DoTableLookup(ClientsGroup group)
+        {
             return _clientsManager.GetGroupTable(group);
         }
 
         private void TrySeatSomebodyFromQueue()
         {
-            // TO LOCK Queue (on write)
             int minimumNotSeatedSize = _tablesManager.MaxTableSize + 1;
 
             var queueItem = _clientsManager.GetCurrentAndMoveNext();
@@ -80,8 +110,6 @@ namespace RestManagerLogic
 
         private bool TrySeatClientsGroup(ClientsGroup group)
         {
-            // TO LOCK Tables Matrix (on write)
-            
             var table = _tablesManager.AssignGroupToTable(group);
             if (table == null)
             {
@@ -94,13 +122,11 @@ namespace RestManagerLogic
 
         private class GroupInRest
         {
-            public readonly ClientsGroup Group;
             public LinkedListNode<ClientsGroup> Node { get; private set; }
             public Table Table { get; private set; }
 
             public GroupInRest(ClientsGroup group)
             {
-                Group = group;
                 Node = new LinkedListNode<ClientsGroup>(group);
             }
 
@@ -140,26 +166,6 @@ namespace RestManagerLogic
                 return _tables.Values.Select((t) => t.Value);
             }
 
-            public void ChangeTableIndex(Table table, int newAvailableSeatsValue)
-            {
-                var tableNode = _tables[table.Guid];
-
-                _tablesBySeats[table.AvailableChairs].Remove(tableNode);
-                var newTableHead = _tablesBySeats[newAvailableSeatsValue];
-
-                bool isStillOccupied = table.Size > newAvailableSeatsValue;
-                if (isStillOccupied)
-                {
-                    // put occupied tables at the end in case there is no free tables
-                    newTableHead.AddLast(tableNode);
-                }
-                else
-                {
-                    // put free tables as first possible options at the beginning
-                    newTableHead.AddFirst(tableNode);
-                }
-            }
-
             public Table AssignGroupToTable(ClientsGroup group)
             {
                 var enoughRoomTables = _tablesBySeats[group.Size];
@@ -186,7 +192,33 @@ namespace RestManagerLogic
                 tableNode.Value.SeatClientsGroup(group);
                 return tableNode.Value;
             }
+
+            public void ReleaseTableFromGroup(Table table, ClientsGroup group)
+            {
+                ChangeTableIndex(table, table.AvailableChairs + group.Size);
+                table.ReleaseChairs(group);
+            }
             
+            private void ChangeTableIndex(Table table, int newAvailableSeatsValue)
+            {
+                var tableNode = _tables[table.Guid];
+
+                _tablesBySeats[table.AvailableChairs].Remove(tableNode);
+                var newTableHead = _tablesBySeats[newAvailableSeatsValue];
+
+                bool isStillOccupied = table.Size > newAvailableSeatsValue;
+                if (isStillOccupied)
+                {
+                    // put occupied tables at the end in case there is no free tables
+                    newTableHead.AddLast(tableNode);
+                }
+                else
+                {
+                    // put free tables as first possible options at the beginning
+                    newTableHead.AddFirst(tableNode);
+                }
+            }
+
             private bool HasFreeTable(LinkedList<Table> tables)
             {
                 var first = tables.First;
@@ -209,7 +241,7 @@ namespace RestManagerLogic
                 return first.Value.IsOccupied;
             }
         }
-        
+
         private class ClientsManager
         {
             private readonly LinkedList<ClientsGroup> _clientsQueue = new();
@@ -293,5 +325,66 @@ namespace RestManagerLogic
                 public ClientsGroup Current;
             }
         }
+
+#region Multithreading Attempts
+
+        private const int ActiveReadersFlagWriteLimit = 1000;
+        private int _activeReadersFlag;
+        private readonly AutoResetEvent _readersCounterAllowChangeEvent = new(true);
+        private readonly object _writeLockObj = new();
+
+        private void EnterReadSection()
+        {
+            while (Volatile.Read(ref _activeReadersFlag) >= ActiveReadersFlagWriteLimit)
+            {
+                _readersCounterAllowChangeEvent.WaitOne();
+            }
+
+            Interlocked.Increment(ref _activeReadersFlag);
+            _readersCounterAllowChangeEvent.Set();
+        }
+
+        private void ExitReadSection()
+        {
+            Interlocked.Decrement(ref _activeReadersFlag);
+            _readersCounterAllowChangeEvent.Set();
+        }
+
+        private bool EnterChangeSection()
+        {
+            // 1. TAKE FULL READ LOCK (block reading as well)
+            while (Volatile.Read(ref _activeReadersFlag) >= ActiveReadersFlagWriteLimit)
+            {
+                _readersCounterAllowChangeEvent.WaitOne();
+            }
+
+            Interlocked.Add(ref _activeReadersFlag, ActiveReadersFlagWriteLimit);
+            while (Volatile.Read(ref _activeReadersFlag) > ActiveReadersFlagWriteLimit)
+            {
+                _readersCounterAllowChangeEvent.WaitOne();
+            }
+
+            // 2. TAKE WRITE LOCK
+            var lockWasTaken = false;
+            Monitor.Enter(_writeLockObj, ref lockWasTaken);
+
+            return lockWasTaken;
+        }
+
+        private void ExitChangeSection(bool lockWasTaken)
+        {
+            // Releasing locks in reverse order
+            // 2. RELEASE WRITE LOCK
+            if (lockWasTaken)
+            {
+                Monitor.Exit(_writeLockObj);
+            }
+            
+            // 1. RELEASE FULL READ LOCK
+            Interlocked.Add(ref _activeReadersFlag, -ActiveReadersFlagWriteLimit);
+            _readersCounterAllowChangeEvent.Set();
+        }
+
+#endregion
     }
 }
