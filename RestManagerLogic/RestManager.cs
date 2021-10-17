@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 
 namespace RestManagerLogic
 {
@@ -9,6 +8,7 @@ namespace RestManagerLogic
     {
         private readonly TablesManager _tablesManager;
         private readonly ClientsManager _clientsManager = new();
+        private readonly ReadWriteLockSlimDisposableWrap _readerWriterLock = new();
 
         public IEnumerable<Table> Tables => _tablesManager.GetTables();
 
@@ -19,15 +19,9 @@ namespace RestManagerLogic
 
         public void OnArrive(ClientsGroup group)
         {
-            bool logWasTaken = false;
-            try
+            using (_readerWriterLock.TakeWriterDisposableLock())
             {
-                logWasTaken = EnterChangeSection();
                 ProcessNewGroup(group);
-            }
-            finally
-            {
-                ExitChangeSection(logWasTaken);
             }
         }
 
@@ -43,15 +37,9 @@ namespace RestManagerLogic
 
         public void OnLeave(ClientsGroup group)
         {
-            bool logWasTaken = false;
-            try
+            using (_readerWriterLock.TakeWriterDisposableLock())
             {
-                logWasTaken = EnterChangeSection();
                 ProcessGroupLeaving(group);
-            }
-            finally
-            {
-                ExitChangeSection(logWasTaken);
             }
         }
 
@@ -76,14 +64,9 @@ namespace RestManagerLogic
         
         public Table Lookup(ClientsGroup group)
         {
-            try
+            using (_readerWriterLock.TakeReaderDisposableLock())
             {
-                EnterReadSection();
                 return DoTableLookup(group);
-            }
-            finally
-            {
-                ExitReadSection();
             }
         }
 
@@ -325,66 +308,5 @@ namespace RestManagerLogic
                 public ClientsGroup Current;
             }
         }
-
-#region Multithreading Attempts
-
-        private const int ActiveReadersFlagWriteLimit = 1000;
-        private int _activeReadersFlag;
-        private readonly AutoResetEvent _readersCounterAllowChangeEvent = new(true);
-        private readonly object _writeLockObj = new();
-
-        private void EnterReadSection()
-        {
-            while (Volatile.Read(ref _activeReadersFlag) >= ActiveReadersFlagWriteLimit)
-            {
-                _readersCounterAllowChangeEvent.WaitOne();
-            }
-
-            Interlocked.Increment(ref _activeReadersFlag);
-            _readersCounterAllowChangeEvent.Set();
-        }
-
-        private void ExitReadSection()
-        {
-            Interlocked.Decrement(ref _activeReadersFlag);
-            _readersCounterAllowChangeEvent.Set();
-        }
-
-        private bool EnterChangeSection()
-        {
-            // 1. TAKE FULL READ LOCK (block reading as well)
-            while (Volatile.Read(ref _activeReadersFlag) >= ActiveReadersFlagWriteLimit)
-            {
-                _readersCounterAllowChangeEvent.WaitOne();
-            }
-
-            Interlocked.Add(ref _activeReadersFlag, ActiveReadersFlagWriteLimit);
-            while (Volatile.Read(ref _activeReadersFlag) > ActiveReadersFlagWriteLimit)
-            {
-                _readersCounterAllowChangeEvent.WaitOne();
-            }
-
-            // 2. TAKE WRITE LOCK
-            var lockWasTaken = false;
-            Monitor.Enter(_writeLockObj, ref lockWasTaken);
-
-            return lockWasTaken;
-        }
-
-        private void ExitChangeSection(bool lockWasTaken)
-        {
-            // Releasing locks in reverse order
-            // 2. RELEASE WRITE LOCK
-            if (lockWasTaken)
-            {
-                Monitor.Exit(_writeLockObj);
-            }
-            
-            // 1. RELEASE FULL READ LOCK
-            Interlocked.Add(ref _activeReadersFlag, -ActiveReadersFlagWriteLimit);
-            _readersCounterAllowChangeEvent.Set();
-        }
-
-#endregion
     }
 }
