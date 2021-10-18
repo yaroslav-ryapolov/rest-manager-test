@@ -32,9 +32,9 @@ namespace RestManagerLogicTests
             
             _restManagerComplex.OnArrive(group);
 
-            if (_restManagerComplex.Tables.Count(t => t.IsOccupied) > 1)
+            if (_restManagerComplex.Tables.Count(t => t.IsOccupied) != 1)
             {
-                Assert.Fail("More than one table is occupied");
+                Assert.Fail("Wrong number of tables is occupied");
             }
             
             if (_restManagerComplex.Tables.Count((t) => t.SeatedClientGroups.Contains(group) && t.Size == 3) != 1)
@@ -56,7 +56,7 @@ namespace RestManagerLogicTests
 
             if (_restManagerComplex.Tables.Count(t => t.IsOccupied) != 2)
             {
-                Assert.Fail("Wrong number of table is occupied");
+                Assert.Fail("Wrong number of tables is occupied");
             }
             
             if (_restManagerComplex.Tables.Count((t) => t.SeatedClientGroups.Contains(group1) && t.Size == 3) != 1)

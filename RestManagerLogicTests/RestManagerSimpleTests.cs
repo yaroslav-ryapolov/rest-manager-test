@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
 using RestManagerLogic;
-using RestManagerLogic.RestManagerLinkedList;
 
 namespace RestManagerLogicTests
 {
@@ -32,9 +31,9 @@ namespace RestManagerLogicTests
             
             _restManagerSimple.OnArrive(group);
 
-            if (_restManagerSimple.Tables.Count(t => t.IsOccupied) > 1)
+            if (_restManagerSimple.Tables.Count(t => t.IsOccupied) != 1)
             {
-                Assert.Fail("More than one table is occupied");
+                Assert.Fail("Wrong number of tables is occupied");
             }
             
             if (_restManagerSimple.Tables.Count((t) => t.SeatedClientGroups.Contains(group) && t.Size == 3) != 1)
