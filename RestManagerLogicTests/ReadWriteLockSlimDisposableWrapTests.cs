@@ -10,18 +10,18 @@ using RestManagerLogic;
 namespace RestManagerLogicTests
 {
     [TestFixture]
-    public class TwoStageMonitorTests
+    public class ReadWriteLockSlimDisposableWrapTests
     {
         [Test]
         public void TestExecutionOrderSample()
         {
             var processingOrderQueue = new ConcurrentQueue<int>();
-            var monitor = new TwoStageMonitor();
+            var readerWriterLock = new ReadWriteLockSlimDisposableWrap();
 
             void ReaderAction(int number, int delay)
             {
                 Console.WriteLine("Start - " + number);
-                using (monitor.TakeOne())
+                using (readerWriterLock.TakeReaderDisposableLock())
                 {
                     Console.WriteLine("Taken - " + number);
 
@@ -35,7 +35,7 @@ namespace RestManagerLogicTests
             void WriterAction(int number, int delay)
             {
                 Console.WriteLine("Start - " + number);
-                using (monitor.TakeAll())
+                using (readerWriterLock.TakeWriterDisposableLock())
                 {
                     Console.WriteLine("Taken - " + number);
 
@@ -71,6 +71,7 @@ namespace RestManagerLogicTests
             tasks.Add(Task.Run(() => ReaderAction(7, 100)));
 
             Task.WaitAll(tasks.ToArray());
+
 
             var processingOrder = processingOrderQueue.ToArray();
             Console.WriteLine(String.Join(',', processingOrder));

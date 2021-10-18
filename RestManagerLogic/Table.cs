@@ -19,8 +19,7 @@ namespace RestManagerLogic
         {
             Guid = Guid.NewGuid();
             Size = size;
-
-            UpdateAvailableChairs();
+            AvailableChairs = Size;
         }
 
         public void SeatClientsGroup(ClientsGroup group)
@@ -31,7 +30,7 @@ namespace RestManagerLogic
             }
 
             _seatedClientsGroups.Add(group);
-            UpdateAvailableChairs();
+            AvailableChairs -= group.Size;
         }
 
         public void ReleaseChairs(ClientsGroup group)
@@ -40,12 +39,7 @@ namespace RestManagerLogic
             {
                 throw new ArgumentOutOfRangeException(nameof(group), "Group was not at this table");
             }
-            UpdateAvailableChairs();
-        }
-
-        private void UpdateAvailableChairs()
-        {
-            AvailableChairs = Size - _seatedClientsGroups.Sum((g) => g.Size);
+            AvailableChairs += group.Size;
         }
     }
 }
