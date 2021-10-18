@@ -41,5 +41,10 @@ namespace RestManagerLogic
             }
             AvailableChairs += group.Size;
         }
+
+        public bool HasGroup(ClientsGroup group)
+        {
+            return _seatedClientsGroups.Contains(group);
+        }
     }
 }

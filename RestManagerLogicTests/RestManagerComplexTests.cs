@@ -7,7 +7,7 @@ using RestManagerLogic.RestManagerLinkedList;
 namespace RestManagerLogicTests
 {
     [TestFixture]
-    public class RestManagerTests
+    public class RestManagerComplexTests
     {
         private RestManagerComplex _restManagerComplex;
 
