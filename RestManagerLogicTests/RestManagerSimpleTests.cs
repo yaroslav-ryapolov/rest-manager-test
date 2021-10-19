@@ -1,5 +1,9 @@
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using RestManagerLogic;
 
@@ -158,6 +162,70 @@ namespace RestManagerLogicTests
             }
 
             Assert.Pass();
+        }
+
+        [Test]
+        public void PerformanceTest()
+        {
+            const int tablesCount = 1000;
+            const int clientsCount = 10000;
+            const int arrivalDelay = 10;
+            const int leaveDelay = 30;
+
+            var sizeRandomizer = new Random();
+
+            var tables = new List<Table>(tablesCount);
+            for (int i = 0; i < tablesCount; i++)
+            {
+                tables.Add(new Table(sizeRandomizer.Next(1, 7)));
+            }
+            
+            var clients = new List<ClientsGroup>(clientsCount);
+            for (int i = 0; i < clientsCount; i++)
+            {
+                clients.Add(new ClientsGroup(sizeRandomizer.Next(1, 7)));
+            }
+
+            var initializerStopwatch = new Stopwatch();
+            initializerStopwatch.Start();
+            _restManagerSimple = new RestManagerSimple(tables);
+            initializerStopwatch.Stop();
+
+            var arrivalTime = new TimeSpan(0);
+            var arrivalTask = Task.Run(async () =>
+            {
+                var stopwatch = new Stopwatch();
+
+                foreach (var group in clients)
+                {
+                    await Task.Delay(arrivalDelay);
+
+                    stopwatch.Restart();
+                    _restManagerSimple.OnArrive(group);
+                    stopwatch.Stop();
+                    arrivalTime += stopwatch.Elapsed;
+                }
+            });
+
+            Thread.Sleep(1000);
+            var leaveTime = new TimeSpan(0);
+            var leaveTask = Task.Run(async () =>
+            {
+                var stopwatch = new Stopwatch();
+
+                foreach (var group in clients)
+                {
+                    await Task.Delay(leaveDelay);
+
+                    stopwatch.Restart();
+                    _restManagerSimple.OnLeave(group);
+                    stopwatch.Stop();
+                    leaveTime += stopwatch.Elapsed;
+                }
+            });
+
+            Task.WaitAll(arrivalTask, leaveTask);
+            Assert.Pass($"Initialization [{initializerStopwatch.Elapsed:c}]; total rest-managing time [{(arrivalTime + leaveTime):c}];");
         }
     }
 }
