@@ -20,11 +20,11 @@ namespace RestManagerLogic.RestManagerLinkedList
         {
             using (_readerWriterLock.TakeWriterDisposableLock())
             {
-                ProcessNewGroup(group);
+                DoOnArrive(group);
             }
         }
 
-        private void ProcessNewGroup(ClientsGroup group)
+        private void DoOnArrive(ClientsGroup group)
         {
             _clientsManager.AddGroup(group);
 
@@ -38,11 +38,11 @@ namespace RestManagerLogic.RestManagerLinkedList
         {
             using (_readerWriterLock.TakeWriterDisposableLock())
             {
-                ProcessGroupLeaving(group);
+                DoOnLeave(group);
             }
         }
 
-        private void ProcessGroupLeaving(ClientsGroup group)
+        private void DoOnLeave(ClientsGroup group)
         {
             if (_clientsManager.DequeueGroup(group))
             {
