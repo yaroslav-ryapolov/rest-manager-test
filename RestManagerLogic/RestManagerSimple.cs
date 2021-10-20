@@ -84,6 +84,7 @@ namespace RestManagerLogic
             while (groupToSeat != null)
             {
                 table.SeatClientsGroup(groupToSeat);
+                _clientsQueue.Remove(groupToSeat);
                 groupToSeat = _clientsQueue.FirstOrDefault((g) => g.Size <= table.AvailableChairs);
             }
         }

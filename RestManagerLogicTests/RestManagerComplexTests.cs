@@ -164,14 +164,58 @@ namespace RestManagerLogicTests
 
             Assert.Pass();
         }
+        
+        [Test]
+        public void TestGoOutOfQueue()
+        {
+            _restManagerComplex = new RestManagerComplex(new List<Table>
+            {
+                new Table(6),
+                new Table(6),
+            });
+
+            var group1 = new ClientsGroup(5);
+            var group2 = new ClientsGroup(5);
+            var group3 = new ClientsGroup(5);
+            var group4 = new ClientsGroup(5);
+            
+            _restManagerComplex.OnArrive(group1);
+            _restManagerComplex.OnArrive(group2);
+            _restManagerComplex.OnArrive(group3);
+            _restManagerComplex.OnArrive(group4);
+
+            if (_restManagerComplex.Tables.Any((t) => t.SeatedClientGroups.Contains(group3))
+                || _restManagerComplex.Tables.Any((t) => t.SeatedClientGroups.Contains(group4)))
+            {
+                Assert.Fail("group3 and group4 should wait in queue");
+            }
+
+            _restManagerComplex.OnLeave(group1);
+            if (_restManagerComplex.Tables.Count((t) => t.SeatedClientGroups.Contains(group3)) != 1)
+            {
+                Assert.Fail("group3 should be seated");
+            }
+            
+            _restManagerComplex.OnLeave(group2);
+            if (_restManagerComplex.Tables.Count((t) => t.SeatedClientGroups.Contains(group3)) != 1)
+            {
+                Assert.Fail("group3 should be seated at one table only");
+            }
+            if (_restManagerComplex.Tables.Count((t) => t.SeatedClientGroups.Contains(group4)) != 1)
+            {
+                Assert.Fail("group4 should be seated");
+            }
+            
+            Assert.Pass();
+        }
 
         [Test]
         public void PerformanceTest()
         {
             const int tablesCount = 1000;
             const int clientsCount = 10000;
-            const int arrivalDelay = 10;
-            const int leaveDelay = 30;
+            const int arrivalDelay = 1;
+            const int leaveDelay = 3;
 
             var sizeRandomizer = new Random();
 
