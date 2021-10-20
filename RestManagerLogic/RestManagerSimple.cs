@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace RestManagerLogic
 {
-    public class RestManagerSimple
+    public class RestManagerSimple: IRestManager
     {
         private readonly ReadWriteLockSlimDisposableWrap _readerWriterLock = new();
         private readonly List<Table> _tablesSorted;
@@ -78,7 +78,7 @@ namespace RestManagerLogic
                 throw new ArgumentException("No such group found", nameof(group));
             }
             table.ReleaseChairs(group);
-            
+
             // trying to dequeue some waiting groups
             var groupToSeat = _clientsQueue.FirstOrDefault((g) => g.Size <= table.AvailableChairs);
             while (groupToSeat != null)
@@ -96,7 +96,7 @@ namespace RestManagerLogic
                 return DoSeatedGroupLookup(group);
             }
         }
-        
+
         private Table DoSeatedGroupLookup(ClientsGroup group)
         {
             return _tablesSorted.FirstOrDefault((t) => t.HasGroup(group));

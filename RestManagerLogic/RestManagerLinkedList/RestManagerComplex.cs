@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace RestManagerLogic.RestManagerLinkedList
 {
-    public class RestManagerComplex
+    public class RestManagerComplex: IRestManager
     {
         private readonly TablesManager _tablesManager;
         private readonly ClientsManager _clientsManager = new();
@@ -49,7 +49,7 @@ namespace RestManagerLogic.RestManagerLinkedList
                 _clientsManager.RemoveGroup(group);
                 return;
             }
-                
+
             var table = DoTableLookup(group);
             _clientsManager.RemoveGroup(group);
             if (table == null)
@@ -60,7 +60,7 @@ namespace RestManagerLogic.RestManagerLinkedList
             _tablesManager.ReleaseTableFromGroup(table, group);
             TrySeatSomebodyFromQueue();
         }
-        
+
         public Table Lookup(ClientsGroup group)
         {
             using (_readerWriterLock.TakeReaderDisposableLock())
