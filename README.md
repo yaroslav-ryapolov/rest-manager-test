@@ -1,1 +1,1 @@
-# Simple "Restaurant Manager Assistant" Web-App
+# Simulated "Restaurant Manager Assistant" Web-App
