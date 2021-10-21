@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace RestManagerLogic.RestManagerLinkedList
 {
@@ -18,12 +17,16 @@ namespace RestManagerLogic.RestManagerLinkedList
             }
         }
 
-        public void AddGroup(ClientsGroup group)
+        public void AddAndEnqueueGroup(ClientsGroup group)
         {
-            if (!_clients.TryAdd(group.Guid, new GroupInRest(group)))
+            var newGroupInRest = new GroupInRest(group);
+            if (!_clients.TryAdd(group.Guid, newGroupInRest))
             {
                 throw new ArgumentException("Cannot add already presented group", nameof(group));
             }
+
+            _clientsQueue.AddLast(newGroupInRest.QueueNode);
+            _clientsQueueBySize[group.Size].AddLast(newGroupInRest.QueueBySizeNode);
         }
 
         public void RemoveGroup(ClientsGroup group)
@@ -35,15 +38,7 @@ namespace RestManagerLogic.RestManagerLinkedList
             }
         }
 
-        public void EnqueueGroup(ClientsGroup group)
-        {
-            var groupInRest = _clients[group.Guid];
-            _clientsQueue.AddLast(groupInRest.QueueNode);
-
-            _clientsQueueBySize[group.Size].AddLast(groupInRest.QueueBySizeNode);
-        }
-
-        public bool DequeueGroup(ClientsGroup group)
+        private void DequeueGroup(ClientsGroup group)
         {
             // TODO: as result of this method GroupInRest would be in incorrect state (as Node fields will point to some un-actual nodes
             var groupInRest = _clients[group.Guid];
@@ -51,10 +46,7 @@ namespace RestManagerLogic.RestManagerLinkedList
             {
                 _clientsQueue.Remove(groupInRest.QueueNode);
                 _clientsQueueBySize[group.Size].Remove(groupInRest.QueueBySizeNode);
-                return true;
             }
-
-            return false;
         }
 
         public ClientsGroup FindNextSmallerOrEqualGroupInQueue(int size)
@@ -64,7 +56,7 @@ namespace RestManagerLogic.RestManagerLinkedList
             {
                 var candidate = _clientsQueueBySize[i].First?.Value;
 
-                if (result == null || candidate?.ArrivalTime < result?.ArrivalTime)
+                if (result == null || candidate?.ArrivalTime < result.ArrivalTime)
                 {
                     result = candidate;
                 }

@@ -33,48 +33,47 @@ namespace RestManagerLogic.RestManagerLinkedList
             return _tables.Values.Select((t) => t.Value);
         }
 
-        public Table AssignGroupToTable(ClientsGroup group)
+        public Table DoSeatsLookup(int size)
         {
-            var enoughRoomTables = _tablesBySeats[group.Size];
-            int i = group.Size + 1;
-            while (IsEmptyListOrAllTablesOccupied(enoughRoomTables) && i < _tablesBySeats.Count)
+            var possibleTables = _tablesBySeats
+                .Skip(size)
+                .Where((a) => a.First != null)
+                .Select((a) => a.First.Value);
+
+            Table resultTable = null;
+            foreach (var table in possibleTables)
             {
-                if (!enoughRoomTables.Any() || HasFreeTable(_tablesBySeats[i]))
+                if (!table.IsOccupied)
                 {
-                    enoughRoomTables = _tablesBySeats[i];
+                    return table;
                 }
 
-                i++;
+                resultTable ??= table;
             }
 
-            var tableNode = enoughRoomTables.First;
-            if (tableNode == null)
-            {
-                return null;
-            }
+            return resultTable;
+        }
 
-            // move table to new list
-            ChangeTableIndex(tableNode.Value, tableNode.Value.AvailableChairs - group.Size);
-
-            tableNode.Value.SeatClientsGroup(group);
-            return tableNode.Value;
+        public void SeatGroupAtTable(ClientsGroup group, Table table)
+        {
+            table.SeatClientsGroup(group);
+            UpdateTableIndex(table);
         }
 
         public void ReleaseTableFromGroup(Table table, ClientsGroup group)
         {
-            ChangeTableIndex(table, table.AvailableChairs + group.Size);
             table.ReleaseChairs(group);
+            UpdateTableIndex(table);
         }
 
-        private void ChangeTableIndex(Table table, int newAvailableSeatsValue)
+        private void UpdateTableIndex(Table table)
         {
             var tableNode = _tables[table.Guid];
 
-            _tablesBySeats[table.AvailableChairs].Remove(tableNode);
-            var newTableHead = _tablesBySeats[newAvailableSeatsValue];
+            tableNode.List?.Remove(tableNode);
+            var newTableHead = _tablesBySeats[table.AvailableChairs];
 
-            bool isStillOccupied = table.Size > newAvailableSeatsValue;
-            if (isStillOccupied)
+            if (table.IsOccupied)
             {
                 // put occupied tables at the end in case there is no free tables
                 newTableHead.AddLast(tableNode);
@@ -84,28 +83,6 @@ namespace RestManagerLogic.RestManagerLinkedList
                 // put free tables as first possible options at the beginning
                 newTableHead.AddFirst(tableNode);
             }
-        }
-
-        private bool HasFreeTable(LinkedList<Table> tables)
-        {
-            var first = tables.First;
-            if (first == null)
-            {
-                return false;
-            }
-
-            return !first.Value.IsOccupied;
-        }
-
-        private bool IsEmptyListOrAllTablesOccupied(LinkedList<Table> tables)
-        {
-            var first = tables.First;
-            if (first == null)
-            {
-                return true;
-            }
-
-            return first.Value.IsOccupied;
         }
     }
 }
