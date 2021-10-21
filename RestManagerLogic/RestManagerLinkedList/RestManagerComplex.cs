@@ -6,7 +6,7 @@ namespace RestManagerLogic.RestManagerLinkedList
     public class RestManagerComplex: IRestManager
     {
         private readonly TablesManager _tablesManager;
-        private readonly ClientsManager _clientsManager = new();
+        private readonly ClientsManager _clientsManager;
         private readonly ReadWriteLockSlimDisposableWrap _readerWriterLock = new();
 
         public IEnumerable<Table> Tables => _tablesManager.GetTables();
@@ -14,6 +14,7 @@ namespace RestManagerLogic.RestManagerLinkedList
         public RestManagerComplex(List<Table> tables)
         {
             _tablesManager = new TablesManager(tables);
+            _clientsManager = new ClientsManager(_tablesManager.MaxTableSize);
         }
 
         public void OnArrive(ClientsGroup group)
@@ -58,7 +59,39 @@ namespace RestManagerLogic.RestManagerLinkedList
             }
 
             _tablesManager.ReleaseTableFromGroup(table, group);
-            TrySeatSomebodyFromQueue();
+
+            //  TODO: it makes sense to seat at released table as there is no new seats appeared
+            TrySeatSomebodyFromQueue(table.AvailableChairs);
+        }
+
+        private void TrySeatSomebodyFromQueue(int freeSeatsSize)
+        {
+            // int minimumNotSeatedSize = _tablesManager.MaxTableSize + 1;
+            //
+            // var queueItem = _clientsManager.GetCurrentAndMoveNext();
+            // while (queueItem != null && minimumNotSeatedSize > 1)
+            // {
+            //     if (queueItem.Current.Group.Size < minimumNotSeatedSize && !TrySeatClientsGroup(queueItem.Current.Group))
+            //     {
+            //         minimumNotSeatedSize = queueItem.Current.Group.Size;
+            //     }
+            //
+            //     queueItem = _clientsManager.GetCurrentAndMoveNext(queueItem);
+            // }
+
+            var groupToSeat = _clientsManager.FindNextSmallerOrEqualGroupInQueue(freeSeatsSize);
+            while (groupToSeat != null && freeSeatsSize > 0)
+            {
+                if (TrySeatClientsGroup(groupToSeat))
+                {
+                    freeSeatsSize -= groupToSeat.Size;
+                }
+
+                if (freeSeatsSize > 0)
+                {
+                    groupToSeat = _clientsManager.FindNextSmallerOrEqualGroupInQueue(freeSeatsSize);
+                }
+            }
         }
 
         public Table Lookup(ClientsGroup group)
@@ -72,22 +105,6 @@ namespace RestManagerLogic.RestManagerLinkedList
         private Table DoTableLookup(ClientsGroup group)
         {
             return _clientsManager.GetGroupTable(group);
-        }
-
-        private void TrySeatSomebodyFromQueue()
-        {
-            int minimumNotSeatedSize = _tablesManager.MaxTableSize + 1;
-
-            var queueItem = _clientsManager.GetCurrentAndMoveNext();
-            while (queueItem != null && minimumNotSeatedSize > 1)
-            {
-                if (queueItem.Current.Size < minimumNotSeatedSize && !TrySeatClientsGroup(queueItem.Current))
-                {
-                    minimumNotSeatedSize = queueItem.Current.Size;
-                }
-
-                queueItem = _clientsManager.GetCurrentAndMoveNext(queueItem);
-            }
         }
 
         private bool TrySeatClientsGroup(ClientsGroup group)

@@ -54,5 +54,11 @@ namespace RestManagerLogicTests
         {
             PerformanceTestBase();
         }
+
+        [Test]
+        public void DequeuePerformanceTest()
+        {
+            DequeuePerformanceTestBase();
+        }
     }
 }

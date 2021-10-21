@@ -250,5 +250,45 @@ namespace RestManagerLogicTests
             Task.WaitAll(arrivalTask, leaveTask);
             Assert.Pass($"Initialization [{initializerStopwatch.Elapsed:c}]; total rest-managing time [{(arrivalTime + leaveTime):c}];");
         }
+
+        protected void DequeuePerformanceTestBase()
+        {
+            var restManager = GetManager(3);
+            int groupsCount = 10_000_000;
+
+            var group1 = new ClientsGroup(1);
+            var group2 = new ClientsGroup(2);
+            restManager.OnArrive(group1);
+            restManager.OnArrive(group2);
+
+            for (int i = 0; i < groupsCount; i++)
+            {
+                restManager.OnArrive(new ClientsGroup(3));
+            }
+
+            var group3 = new ClientsGroup(2);
+            restManager.OnArrive(group3);
+
+            var stopwatch = new Stopwatch();
+            stopwatch.Restart();
+            int t2 = 0;
+            for (int i = 0; i < groupsCount; i++)
+            {
+                t2 += i;
+            }
+            stopwatch.Stop();
+            var time2 = stopwatch.Elapsed;
+
+            stopwatch.Restart();
+            restManager.OnLeave(group2);
+            stopwatch.Stop();
+
+            var timingMessage = $"Leaving with long queue of bigger groups took [{stopwatch.Elapsed:c}]; while loop by groupsCount took [{time2:c}];";
+            if (restManager.Tables.Count((t) => t.SeatedClientGroups.Contains(group3)) != 1)
+            {
+                Assert.Fail("group3 should be seated | " + timingMessage);
+            }
+            Assert.Pass(timingMessage);
+        }
     }
 }

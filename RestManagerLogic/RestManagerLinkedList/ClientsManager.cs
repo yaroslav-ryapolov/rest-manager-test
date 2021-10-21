@@ -1,12 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace RestManagerLogic.RestManagerLinkedList
 {
     public class ClientsManager
     {
-        private readonly LinkedList<ClientsGroup> _clientsQueue = new();
         private readonly Dictionary<Guid, GroupInRest> _clients = new();
+        private readonly LinkedList<GroupInRest> _clientsQueue = new();
+        private readonly List<LinkedList<GroupInRest>> _clientsQueueBySize = new();
+
+        public ClientsManager(int sizeLimit)
+        {
+            for (int i = 0; i < sizeLimit + 1; i++)
+            {
+                _clientsQueueBySize.Add(new LinkedList<GroupInRest>());
+            }
+        }
 
         public void AddGroup(ClientsGroup group)
         {
@@ -28,19 +38,39 @@ namespace RestManagerLogic.RestManagerLinkedList
         public void EnqueueGroup(ClientsGroup group)
         {
             var groupInRest = _clients[group.Guid];
-            _clientsQueue.AddLast(groupInRest.Node);
+            _clientsQueue.AddLast(groupInRest.QueueNode);
+
+            _clientsQueueBySize[group.Size].AddLast(groupInRest.QueueBySizeNode);
         }
 
         public bool DequeueGroup(ClientsGroup group)
         {
-            var groupNode = _clients[group.Guid].Node;
-            if (groupNode?.List != null)
+            // TODO: as result of this method GroupInRest would be in incorrect state (as Node fields will point to some un-actual nodes
+            var groupInRest = _clients[group.Guid];
+            if (groupInRest.QueueNode?.List != null)
             {
-                _clientsQueue.Remove(groupNode);
+                _clientsQueue.Remove(groupInRest.QueueNode);
+                _clientsQueueBySize[group.Size].Remove(groupInRest.QueueBySizeNode);
                 return true;
             }
 
             return false;
+        }
+
+        public ClientsGroup FindNextSmallerOrEqualGroupInQueue(int size)
+        {
+            GroupInRest result = null;
+            for (int i = size; i > 0; i--)
+            {
+                var candidate = _clientsQueueBySize[i].First?.Value;
+
+                if (result == null || candidate?.ArrivalTime < result?.ArrivalTime)
+                {
+                    result = candidate;
+                }
+            }
+
+            return result?.Group;
         }
 
         public void SeatGroupAtTable(ClientsGroup group, Table table)
@@ -82,23 +112,31 @@ namespace RestManagerLogic.RestManagerLinkedList
 
         public class QueueItem
         {
-            public LinkedListNode<ClientsGroup> Next;
-            public ClientsGroup Current;
+            public LinkedListNode<GroupInRest> Next;
+            public GroupInRest Current;
         }
 
-        private class GroupInRest
+        public class GroupInRest
         {
-            public LinkedListNode<ClientsGroup> Node { get; private set; }
+            public readonly DateTime ArrivalTime;
+            public readonly ClientsGroup Group;
+            public LinkedListNode<GroupInRest> QueueNode { get; private set; }
+            public LinkedListNode<GroupInRest> QueueBySizeNode { get; private set; }
             public Table Table { get; private set; }
 
             public GroupInRest(ClientsGroup group)
             {
-                Node = new LinkedListNode<ClientsGroup>(group);
+                ArrivalTime = DateTime.Now;
+                Group = group;
+
+                QueueNode = new LinkedListNode<GroupInRest>(this);
+                QueueBySizeNode = new LinkedListNode<GroupInRest>(this);
             }
 
             public void SetTable(Table table)
             {
-                Node = null;
+                QueueNode = null;
+                QueueBySizeNode = null;
                 Table = table;
             }
         }
