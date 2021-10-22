@@ -1,8 +1,17 @@
-﻿@{
+﻿@model RestManagerWeb.Models.TableViewModel
+@{
     ViewData["Title"] = "Home Page";
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Welcome 2</h1>
+
+    @using (Html.BeginForm("CreateTable", "Home", FormMethod.Post))
+    {
+        <div class="form-group">
+            @Html.LabelFor(t => t.Size)
+            @Html.TextBoxFor(t => t.Size, new { @class = "form-control" })
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    }
 </div>

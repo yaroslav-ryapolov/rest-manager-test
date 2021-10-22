@@ -7,5 +7,11 @@ namespace RestManagerWeb.Models
     {
         public readonly Guid Guid;
         public readonly int Size;
+
+        public ClientsGroupViewModel(Guid guid, int size)
+        {
+            Guid = guid;
+            Size = size;
+        }
     }
 }

@@ -12,5 +12,11 @@ namespace RestManagerWeb.Models
 
         public int AvailableChairs;
         public bool IsOccupied;
+
+        public TableViewModel(Guid guid, int size)
+        {
+            Guid = guid;
+            Size = size;
+        }
     }
 }
