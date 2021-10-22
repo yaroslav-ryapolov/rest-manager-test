@@ -38,17 +38,6 @@ namespace RestManagerLogic.RestManagerLinkedList
             }
         }
 
-        private void DequeueGroup(ClientsGroup group)
-        {
-            // TODO: as result of this method GroupInRest would be in incorrect state (as Node fields will point to some un-actual nodes
-            var groupInRest = _clients[group.Guid];
-            if (groupInRest.QueueNode?.List != null)
-            {
-                _clientsQueue.Remove(groupInRest.QueueNode);
-                _clientsQueueBySize[group.Size].Remove(groupInRest.QueueBySizeNode);
-            }
-        }
-
         public ClientsGroup FindNextSmallerOrEqualGroupInQueue(int size)
         {
             GroupInRest result = null;
@@ -77,35 +66,19 @@ namespace RestManagerLogic.RestManagerLinkedList
             groupInRest.SetTable(table);
         }
 
+        private void DequeueGroup(ClientsGroup group)
+        {
+            var groupInRest = _clients[group.Guid];
+            if (groupInRest.QueueNode?.List != null)
+            {
+                _clientsQueue.Remove(groupInRest.QueueNode);
+                _clientsQueueBySize[group.Size].Remove(groupInRest.QueueBySizeNode);
+            }
+        }
+
         public Table GetGroupTable(ClientsGroup group)
         {
             return _clients[group.Guid].Table;
-        }
-
-        public QueueItem GetCurrentAndMoveNext(QueueItem current = null)
-        {
-            var groupNode = _clientsQueue.First;
-            if (current != null)
-            {
-                groupNode = current.Next;
-            }
-
-            if (groupNode == null)
-            {
-                return null;
-            }
-
-            return new QueueItem
-            {
-                Next = groupNode.Next,
-                Current = groupNode.Value,
-            };
-        }
-
-        public class QueueItem
-        {
-            public LinkedListNode<GroupInRest> Next;
-            public GroupInRest Current;
         }
 
         public class GroupInRest
