@@ -1,16 +1,32 @@
-﻿@model RestManagerWeb.Models.TableViewModel
+﻿@model RestManagerWeb.Models.RestaurantViewModel
 @{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Configure Tables";
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome 2</h1>
+    <h1 class="display-4">Configure Tables</h1>
+
+    <div>
+        <ul>
+            @foreach (var table in Model.Tables)
+            {
+                <li>
+                    <b>@Html.DisplayFor((m) => table.Name)</b>
+                    with <b>@Html.DisplayFor((m) => table.Size)</b> seats;
+                </li>
+            }
+        </ul>
+    </div>
 
     @using (Html.BeginForm("CreateTable", "Home", FormMethod.Post))
     {
         <div class="form-group">
-            @Html.LabelFor(t => t.Size)
-            @Html.TextBoxFor(t => t.Size, new { @class = "form-control" })
+            @Html.LabelFor(t => Model.NewTable.Name)
+            @Html.TextBoxFor(t => Model.NewTable.Name, new { @class = "form-control" })
+        </div>
+        <div class="form-group">
+            @Html.LabelFor(t => Model.NewTable.Size)
+            @Html.TextBoxFor(t => Model.NewTable.Size, new { @class = "form-control" })
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>
     }
