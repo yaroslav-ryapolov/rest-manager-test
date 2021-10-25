@@ -8,11 +8,11 @@
 
     <div>
         <ul>
-            @foreach (var table in Model.Tables)
+            @for (int i = 0; i < Model.Tables.Count; i++)
             {
                 <li>
-                    <b>@Html.DisplayFor((m) => table.Name)</b>
-                    with <b>@Html.DisplayFor((m) => table.Size)</b> seats;
+                    <b>@Html.DisplayFor((m) => Model.Tables[i].Name)</b>
+                    with <b>@Html.DisplayFor((m) => Model.Tables[i].Size)</b> seats;
                 </li>
             }
         </ul>
@@ -20,12 +20,18 @@
 
     @using (Html.BeginForm("CreateTable", "Home", FormMethod.Post))
     {
+        @Html.AntiForgeryToken()
+
         <div class="form-group">
-            @Html.LabelFor(t => Model.NewTable.Name)
+            @Html.LabelFor(t => Model.Test, new { @class = "control-label" })
+            @Html.TextBoxFor(t => Model.Test, new { @class = "form-control" })
+        </div>
+        <div class="form-group">
+            @Html.LabelFor(t => Model.NewTable.Name, new { @class = "control-label" })
             @Html.TextBoxFor(t => Model.NewTable.Name, new { @class = "form-control" })
         </div>
         <div class="form-group">
-            @Html.LabelFor(t => Model.NewTable.Size)
+            @Html.LabelFor(t => Model.NewTable.Size, new { @class = "control-label" })
             @Html.TextBoxFor(t => Model.NewTable.Size, new { @class = "form-control" })
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>

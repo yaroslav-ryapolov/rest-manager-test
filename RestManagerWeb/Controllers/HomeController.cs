@@ -1,17 +1,14 @@
 ﻿using System;
 using System.Diagnostics;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using RestManagerWeb.Helpers;
 using RestManagerWeb.Models;
 
 namespace RestManagerWeb.Controllers
 {
     public class HomeController : Controller
     {
-        private const string SessionKey = "restaurant";
-
         private readonly ILogger<HomeController> _logger;
 
         public HomeController(ILogger<HomeController> logger)
@@ -21,17 +18,7 @@ namespace RestManagerWeb.Controllers
 
         public IActionResult Index()
         {
-            RestaurantViewModel restaurant;
-            string restaurantSerialized = HttpContext.Session.GetString(SessionKey);
-            if (restaurantSerialized == null)
-            {
-                restaurant = new RestaurantViewModel();
-                HttpContext.Session.SetString(SessionKey, JsonConvert.SerializeObject(restaurant));
-            }
-            else
-            {
-                restaurant = JsonConvert.DeserializeObject<RestaurantViewModel>(restaurantSerialized);
-            }
+            RestaurantViewModel restaurant = HttpContext.Session.GetRestaurant();
 
             return View(restaurant);
         }
@@ -43,28 +30,21 @@ namespace RestManagerWeb.Controllers
         }
 
         [HttpPost]
-        public IActionResult CreateTable(RestaurantViewModel restaurant)
+        [ValidateAntiForgeryToken]
+        public IActionResult CreateTable(RestaurantViewModel model)
         {
-            // var restaurantInSession = JsonConvert.DeserializeObject<RestaurantViewModel>(
-            //     HttpContext.Session.GetString(SessionKey));
-
-            RestaurantViewModel restaurantInSession;
-            string restaurantSerialized = HttpContext.Session.GetString(SessionKey);
-            if (restaurantSerialized == null)
+            if (ModelState.IsValid)
             {
-                restaurantInSession = new RestaurantViewModel();
-                HttpContext.Session.SetString(SessionKey, JsonConvert.SerializeObject(restaurantInSession));
-            }
-            else
-            {
-                restaurantInSession = JsonConvert.DeserializeObject<RestaurantViewModel>(restaurantSerialized);
+                HttpContext.Session.UpdateRestaurant((r) =>
+                {
+                    r.Test = model.Test;
+                    r.Tables.Add(model.NewTable);
+                    r.NewTable = new TableViewModel{ Guid = Guid.NewGuid(), Size = 1, Name = "Some another new table"};
+                });
+                return RedirectToAction("Index");
             }
 
-            restaurantInSession.Tables.Add(restaurant.NewTable);
-            restaurantInSession.NewTable = new TableViewModel(Guid.NewGuid(), 1){Name = "Some another new table"};
-            HttpContext.Session.SetString(SessionKey, JsonConvert.SerializeObject(restaurantInSession));
-
-            return View("Index", restaurantInSession);
+            return BadRequest(ModelState);
         }
     }
 }

@@ -1,12 +1,11 @@
 using System;
-using System.Collections.Generic;
 
 namespace RestManagerWeb.Models
 {
-    public class ClientsGroupViewModel
+    public record ClientsGroupViewModel
     {
-        public readonly Guid Guid;
-        public readonly int Size;
+        public Guid Guid { get; set; }
+        public int Size { get; set; }
 
         public ClientsGroupViewModel(Guid guid, int size)
         {

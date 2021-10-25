@@ -3,10 +3,12 @@ using System.Collections.Generic;
 
 namespace RestManagerWeb.Models
 {
-    public class RestaurantViewModel
+    public record RestaurantViewModel
     {
-        public readonly List<TableViewModel> Tables = new();
+        public string Test { get; set; } = "TEST";
 
-        public TableViewModel NewTable = new TableViewModel(Guid.NewGuid(), 1) {Name = "Some new table"};
+        public List<TableViewModel> Tables { get; set; } = new();
+
+        public TableViewModel NewTable { get; set; } = new() { Guid = Guid.NewGuid(), Size = 1, Name = "Some new table" };
     }
 }
