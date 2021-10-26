@@ -18,33 +18,13 @@ namespace RestManagerWeb.Controllers
 
         public IActionResult Index()
         {
-            RestaurantViewModel restaurant = HttpContext.Session.GetRestaurant();
-
-            return View(restaurant);
+            return View();
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult CreateTable(RestaurantViewModel model)
-        {
-            if (ModelState.IsValid)
-            {
-                HttpContext.Session.UpdateRestaurant((r) =>
-                {
-                    r.Test = model.Test;
-                    r.Tables.Add(model.NewTable);
-                    r.NewTable = new TableViewModel{ Guid = Guid.NewGuid(), Size = 1, Name = "Some another new table"};
-                });
-                return RedirectToAction("Index");
-            }
-
-            return BadRequest(ModelState);
         }
     }
 }

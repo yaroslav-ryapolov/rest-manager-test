@@ -1,39 +1,9 @@
-﻿@model RestManagerWeb.Models.RestaurantViewModel
-@{
-    ViewData["Title"] = "Configure Tables";
+﻿@{
+    ViewData["Title"] = "Restaurants";
 }
 
+<h2>Restaurants</h2>
+
 <div class="text-center">
-    <h1 class="display-4">Configure Tables</h1>
 
-    <div>
-        <ul>
-            @for (int i = 0; i < Model.Tables.Count; i++)
-            {
-                <li>
-                    <b>@Html.DisplayFor((m) => Model.Tables[i].Name)</b>
-                    with <b>@Html.DisplayFor((m) => Model.Tables[i].Size)</b> seats;
-                </li>
-            }
-        </ul>
-    </div>
-
-    @using (Html.BeginForm("CreateTable", "Home", FormMethod.Post))
-    {
-        @Html.AntiForgeryToken()
-
-        <div class="form-group">
-            @Html.LabelFor(t => Model.Test, new { @class = "control-label" })
-            @Html.TextBoxFor(t => Model.Test, new { @class = "form-control" })
-        </div>
-        <div class="form-group">
-            @Html.LabelFor(t => Model.NewTable.Name, new { @class = "control-label" })
-            @Html.TextBoxFor(t => Model.NewTable.Name, new { @class = "form-control" })
-        </div>
-        <div class="form-group">
-            @Html.LabelFor(t => Model.NewTable.Size, new { @class = "control-label" })
-            @Html.TextBoxFor(t => Model.NewTable.Size, new { @class = "form-control" })
-        </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
-    }
 </div>

@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace RestManagerWeb.Models
 {
-    public record RestaurantViewModel
+    public record RestaurantConfigurationViewModel
     {
-        public string Test { get; set; } = "TEST";
+        public bool IsInitialized { get; set; }
+
+        [BindRequired]
+        public string ConfigurationName { get; set; }
 
         public List<TableViewModel> Tables { get; set; } = new();
 
