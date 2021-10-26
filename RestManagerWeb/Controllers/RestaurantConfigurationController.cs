@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using RestManagerLogic;
 using RestManagerWeb.Helpers;
 using RestManagerWeb.Models;
 
@@ -9,11 +13,27 @@ namespace RestManagerWeb.Controllers
 {
     public class RestaurantConfigurationController : Controller
     {
+        private static ConcurrentDictionary<string, IRestManager> _restManagers = new();
+
         private readonly ILogger<RestaurantConfigurationController> _logger;
 
         public RestaurantConfigurationController(ILogger<RestaurantConfigurationController> logger)
         {
             _logger = logger;
+        }
+
+        public IActionResult Index()
+        {
+            var restaurantConfigurations = _restManagers
+                .Select((v) =>
+                    new RestaurantListItemViewModel
+                    {
+                        ConfigurationName = v.Key,
+                        TablesCount = v.Value.Tables.Count(),
+                    })
+                .AsEnumerable();
+
+            return View(restaurantConfigurations);
         }
 
         public IActionResult New()
@@ -23,13 +43,30 @@ namespace RestManagerWeb.Controllers
 
         public IActionResult Details(string id)
         {
-            RestaurantConfigurationViewModel restaurant = HttpContext.Session.GetRestaurant(id);
+            var restManager = _restManagers[id];
+            if (restManager == null)
+            {
+                return NotFound();
+            }
+
+            RestaurantConfigurationViewModel restaurant = new()
+            {
+                IsInitialized = true,
+                ConfigurationName = id,
+                Tables = restManager.Tables.Select((t) =>
+                    new TableViewModel() {
+                        Guid = t.Guid,
+                        Name = "",
+                        Size = t.Size,
+                    })
+                    .ToList()
+            };
             return View(restaurant);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Update(RestaurantConfigurationViewModel model)
+        public IActionResult AddOrUpdate(RestaurantConfigurationViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -37,16 +74,26 @@ namespace RestManagerWeb.Controllers
             }
             if (!model.IsInitialized && HttpContext.Session.ContainsRestaurant(model.ConfigurationName))
             {
-                return BadRequest("Restaurant with such name already stored in session");
+                return BadRequest("Restaurant with such name already stored in memory");
             }
 
-            HttpContext.Session.UpdateRestaurant(model.ConfigurationName, (r) =>
+            IRestManager restManager = new RestManagerSimple(new List<Table>{ new Table(6), new Table(6) });
+            if (model.IsInitialized)
             {
-                r.IsInitialized = true;
-                r.ConfigurationName = model.ConfigurationName;
-                r.Tables.Add(model.NewTable);
-                r.NewTable = new TableViewModel{ Guid = Guid.NewGuid(), Size = 1, Name = "Some another new table"};
-            });
+                restManager = _restManagers[model.ConfigurationName];
+            }
+            else
+            {
+                _restManagers[model.ConfigurationName] = restManager;
+            }
+
+            // HttpContext.Session.UpdateRestaurant(model.ConfigurationName, (r) =>
+            // {
+            //     r.IsInitialized = true;
+            //     r.ConfigurationName = model.ConfigurationName;
+            //     r.Tables.Add(model.NewTable);
+            //     r.NewTable = new TableViewModel{ Guid = Guid.NewGuid(), Size = 1, Name = "Some another new table"};
+            // });
             return RedirectToAction("Details", new {id = model.ConfigurationName});
         }
     }

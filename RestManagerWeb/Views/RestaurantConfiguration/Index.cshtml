@@ -1,0 +1,27 @@
+﻿@model IEnumerable<RestaurantListItemViewModel>
+@{
+    ViewData["Title"] = "Restaurants";
+}
+
+<h2>Restaurants</h2>
+<p>Create @Html.ActionLink("New", "New", "RestaurantConfiguration") restaurant configuration</p>
+
+<div>
+    <table class="table">
+        <thead>
+        <th>Configuration name</th>
+        <th>Tables count</th>
+        <th>&nbsp;</th>
+        </thead>
+        <tbody>
+        @foreach(var configuration in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor((m) => configuration.ConfigurationName)</td>
+                <td>@Html.DisplayFor((m) => configuration.TablesCount)</td>
+                <td>@Html.ActionLink("Edit", "Details", "RestaurantConfiguration", new { id = configuration.ConfigurationName })</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

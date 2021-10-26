@@ -1,8 +1,6 @@
-﻿using System;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using RestManagerWeb.Helpers;
 using RestManagerWeb.Models;
 
 namespace RestManagerWeb.Controllers
@@ -18,7 +16,7 @@ namespace RestManagerWeb.Controllers
 
         public IActionResult Index()
         {
-            return View();
+            return RedirectToAction("Index", "RestaurantConfiguration");
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
