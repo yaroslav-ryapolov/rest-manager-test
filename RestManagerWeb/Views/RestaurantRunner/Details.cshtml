@@ -1,4 +1,4 @@
-﻿@model RestaurantConfigurationViewModel
+﻿@model RestaurantConfigurationVm
 
 @{
     ViewBag.Title = "Configure Restaurant";
@@ -20,20 +20,20 @@
         </ul>
     </div>
 
-    @using (Html.BeginForm("AddOrUpdate", "RestaurantConfiguration", FormMethod.Post))
+    @using (Html.BeginForm("AddOrUpdate", "RestaurantRunner", FormMethod.Post))
     {
         @Html.AntiForgeryToken()
-        @Html.HiddenFor(t => t.IsInitialized)
+        @Html.HiddenFor(t => t.Guid)
 
         <div class="form-group">
-            @Html.LabelFor(t => Model.ConfigurationName, new { @class = "control-label" })
-            @if (Model.IsInitialized)
+            @Html.LabelFor(t => Model.Name, new { @class = "control-label" })
+            @if (Model.Guid != null)
             {
-                @Html.TextBoxFor(t => Model.ConfigurationName, new { @class = "form-control", @readonly = "readonly" })
+                @Html.TextBoxFor(t => Model.Name, new { @class = "form-control", @readonly = "readonly" })
             }
             else
             {
-                @Html.TextBoxFor(t => Model.ConfigurationName, new { @class = "form-control" })
+                @Html.TextBoxFor(t => Model.Name, new { @class = "form-control" })
             }
         </div>
         <div class="form-group">

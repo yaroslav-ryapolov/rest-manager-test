@@ -1,10 +1,10 @@
-﻿@model IEnumerable<RestaurantListItemViewModel>
+﻿@model IEnumerable<RestaurantListItemVm>
 @{
     ViewData["Title"] = "Restaurants";
 }
 
 <h2>Restaurants</h2>
-<p>Create @Html.ActionLink("New", "New", "RestaurantConfiguration") restaurant configuration</p>
+<p>Create @Html.ActionLink("New", "New", "RestaurantRunner") restaurant configuration</p>
 
 <div>
     <table class="table">
@@ -17,9 +17,9 @@
         @foreach(var configuration in Model)
         {
             <tr>
-                <td>@Html.DisplayFor((m) => configuration.ConfigurationName)</td>
+                <td>@Html.DisplayFor((m) => configuration.Name)</td>
                 <td>@Html.DisplayFor((m) => configuration.TablesCount)</td>
-                <td>@Html.ActionLink("Edit", "Details", "RestaurantConfiguration", new { id = configuration.ConfigurationName })</td>
+                <td>@Html.ActionLink("Edit", "Details", "RestaurantRunner", new { id = configuration.Guid })</td>
             </tr>
         }
         </tbody>

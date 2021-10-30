@@ -6,14 +6,21 @@ namespace RestManagerLogic
 {
     public class Table
     {
-        public readonly Guid Guid;
-        public readonly int Size;
+        public Guid Guid { get; }
+        public int Size { get; }
+        public string Name { get; set; }
 
         private readonly List<ClientsGroup> _seatedClientsGroups = new();
         public IEnumerable<ClientsGroup> SeatedClientGroups => _seatedClientsGroups;
 
         public int AvailableChairs { get; private set; }
         public bool IsOccupied => _seatedClientsGroups.Any();
+
+        public Table(Guid guid, int size)
+        {
+            Guid = guid;
+            Size = size;
+        }
 
         public Table(int size)
         {

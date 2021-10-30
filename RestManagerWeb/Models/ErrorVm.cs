@@ -2,7 +2,7 @@ using System;
 
 namespace RestManagerWeb.Models
 {
-    public class ErrorViewModel
+    public class ErrorVm
     {
         public string RequestId { get; set; }
 
