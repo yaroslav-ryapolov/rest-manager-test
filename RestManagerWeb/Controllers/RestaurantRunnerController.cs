@@ -24,22 +24,12 @@ namespace RestManagerWeb.Controllers
 
         public IActionResult Index()
         {
-            var runners = _restManagerRunners.Values
-                .Select((v) =>
-                    new RestaurantListItemVm
-                    {
-                        Guid = v.Guid,
-                        Name = v.Name,
-                        TablesCount = v.Tables.Count(),
-                    })
-                .AsEnumerable();
-
-            return View(runners);
+            return View(RestManagerRunnerListItemVm.From(_restManagerRunners.Values));
         }
 
         public IActionResult New()
         {
-            return View("Details", new RestaurantConfigurationVm());
+            return View("Details", new RestManagerRunnerVm());
         }
 
         public IActionResult Details(Guid id)
@@ -50,24 +40,12 @@ namespace RestManagerWeb.Controllers
                 return NotFound();
             }
 
-            RestaurantConfigurationVm restaurant = new()
-            {
-                Guid = runner.Guid,
-                Name = runner.Name,
-                Tables = runner.Tables.Select((t) =>
-                    new TableVm() {
-                        Guid = t.Guid,
-                        Name = t.Name,
-                        Size = t.Size,
-                    })
-                    .ToList()
-            };
-            return View(restaurant);
+            return View(RestManagerRunnerVm.From(runner));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult AddOrUpdate(RestaurantConfigurationVm model)
+        public IActionResult AddOrUpdate(RestManagerRunnerVm model)
         {
             if (!ModelState.IsValid)
             {

@@ -1,4 +1,5 @@
 using System;
+using RestManagerLogic;
 
 namespace RestManagerWeb.Models
 {
@@ -7,10 +8,13 @@ namespace RestManagerWeb.Models
         public Guid Guid { get; set; }
         public int Size { get; set; }
 
-        public ClientsGroupVm(Guid guid, int size)
+        public static ClientsGroupVm From(ClientsGroup group)
         {
-            Guid = guid;
-            Size = size;
+            return new ClientsGroupVm
+            {
+                Guid = group.Guid,
+                Size = group.Size,
+            };
         }
     }
 }

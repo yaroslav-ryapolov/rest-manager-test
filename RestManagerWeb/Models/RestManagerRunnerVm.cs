@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using RestManagerLogic;
 
 namespace RestManagerWeb.Models
 {
-    public record RestaurantConfigurationVm
+    public record RestManagerRunnerVm
     {
         public Guid? Guid { get; set; }
 
@@ -16,8 +18,18 @@ namespace RestManagerWeb.Models
         public TableVm NewTable { get; set; } = new()
         {
             Guid = System.Guid.NewGuid(),
-            Size = 1,
-            Name = "Some new table"
+            Size = 2,
+            Name = "New table"
         };
+
+        public static RestManagerRunnerVm From(RestManagerRunner runner)
+        {
+            return new()
+            {
+                Guid = runner.Guid,
+                Name = runner.Name,
+                Tables = runner.Tables.Select(TableVm.From).ToList(),
+            };
+        }
     }
 }
